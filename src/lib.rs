@@ -1,14 +1,37 @@
-use pyo3::prelude::*;
+use pyo3::{exceptions::PyValueError, prelude::*};
+use pythonize::pythonize;
+use yaml_rust2::{Yaml, YamlLoader};
 
-/// Formats the sum of two numbers as string.
+struct _Yaml<'a>(&'a Yaml);
+
+fn _loads(s: String) -> Result<Vec<Yaml>, PyErr> {
+    match YamlLoader::load_from_str(&s) {
+        Ok(val) => Ok(val),
+        Err(err) => Err(PyValueError::new_err(err.to_string())),
+    }
+}
+
+fn _pythonize(py: Python, docs: &Vec<Yaml>) -> PyResult<PyObject> {
+    let _docs: Vec<_Yaml> = docs.into_iter().map(_Yaml).collect();
+
+    match pythonize(py, &_docs) {
+        Ok(val) => Ok(val.unbind()),
+        Err(err) => Err(PyValueError::new_err(err.to_string())),
+    }
+}
+
 #[pyfunction]
-fn sum_as_string(a: usize, b: usize) -> PyResult<String> {
-    Ok((a + b).to_string())
+fn loads(s: String) -> PyResult<PyObject> {
+    Python::with_gil(|py| {
+        let docs: Vec<Yaml> = _loads(s)?;
+        let val = _pythonize(py, &docs)?;
+        Ok(val)
+    })
 }
 
 /// A Python module implemented in Rust.
 #[pymodule]
 fn ayaml(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(sum_as_string, m)?)?;
+    m.add_function(wrap_pyfunction!(loads, m)?)?;
     Ok(())
 }
