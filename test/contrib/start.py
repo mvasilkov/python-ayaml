@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from itertools import chain
 import json
 from pathlib import Path
 from pprint import pprint
@@ -27,17 +28,24 @@ def json_loads_lines(s: str, pos: int) -> list:
     return json_loads(part1) + json_loads(part2)
 
 
+def title(test_dir: Path) -> str:
+    title = test_dir.as_posix()
+    return title[title.rindex('/yaml-test-suite/') + len('/yaml-test-suite/') :]
+
+
 def start():
     passed = 0
     failed = 0
 
     this_path = Path(__file__).parent.resolve()
-    test_dirs = (d for d in (this_path / 'yaml-test-suite').iterdir() if d.is_dir())
-    for test_dir in test_dirs:
+    test_dirs = tuple(d for d in (this_path / 'yaml-test-suite').iterdir() if d.is_dir())
+    test_dirs2 = (dd for dd in chain.from_iterable(d.iterdir() for d in test_dirs) if dd.is_dir())
+
+    for test_dir in chain(test_dirs, test_dirs2):
         infile = test_dir / 'in.yaml'
         jsonfile = test_dir / 'in.json'
         if infile.is_file() and jsonfile.is_file():
-            print(f'Running {test_dir.name}')
+            print(f'Running {title(test_dir)}', end='... ')
 
             infile_text = infile.read_text(encoding='utf-8')
             jsonfile_text = jsonfile.read_text(encoding='utf-8')
