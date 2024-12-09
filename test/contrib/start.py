@@ -39,7 +39,7 @@ def title(test_dir: Path, this_path: Path) -> str:
     return _title
 
 
-def start(loads: Callable = ayaml.loads, exception: type[Exception] = ValueError):
+def start(*, loads: Callable = ayaml.loads, exception: type[Exception] = ValueError):
     passed = 0
     failed = 0
 
@@ -88,4 +88,14 @@ def start(loads: Callable = ayaml.loads, exception: type[Exception] = ValueError
 
 
 if __name__ == '__main__':
-    start()
+    from sys import argv
+
+    if len(argv) == 2 and argv[1] == 'pyyaml':
+        import yaml
+
+        def loads(s: str) -> list:
+            return list(yaml.safe_load_all(s))
+
+        start(loads=loads, exception=yaml.YAMLError)
+    else:
+        start()
