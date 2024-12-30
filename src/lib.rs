@@ -36,7 +36,7 @@ impl Serialize for _Yaml<'_> {
     }
 }
 
-fn _loads(s: String) -> Result<Vec<Yaml>, PyErr> {
+fn _loads(s: &str) -> Result<Vec<Yaml>, PyErr> {
     match YamlLoader::load_from_str(&s) {
         Ok(val) => Ok(val),
         Err(err) => Err(PyValueError::new_err(err.to_string())),
@@ -53,9 +53,9 @@ fn _pythonize(py: Python, docs: &Vec<Yaml>) -> PyResult<PyObject> {
 }
 
 #[pyfunction]
-fn loads(s: String) -> PyResult<PyObject> {
+fn loads(s: &str) -> PyResult<PyObject> {
+    let docs: Vec<Yaml> = _loads(s)?;
     Python::with_gil(|py| {
-        let docs: Vec<Yaml> = _loads(s)?;
         let val = _pythonize(py, &docs)?;
         Ok(val)
     })

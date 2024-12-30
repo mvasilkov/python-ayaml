@@ -91,7 +91,7 @@ if __name__ == '__main__':
     from sys import argv
 
     if len(argv) == 2 and argv[1] == 'pyyaml':
-        import yaml
+        import yaml  # type: ignore
 
         def loads(s: str) -> list:
             return list(yaml.safe_load_all(s))
